@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase/server";
+import Link from "next/link";
 
 type StudentRow = {
   id: string;
@@ -42,7 +43,14 @@ function StudentTable({ students }: { students: StudentRow[] }) {
         <tbody className="divide-y divide-stone-100">
           {students.map((student) => (
             <tr key={student.id} className="hover:bg-stone-50">
-              <td className="px-4 py-3 font-medium text-stone-900">{student.full_name}</td>
+              <td className="px-4 py-3 font-medium text-stone-900">
+                <Link
+                  href={`/students/${student.id}`}
+                  className="transition-colors hover:text-amber-900 hover:underline"
+                >
+                  {student.full_name}
+                </Link>
+              </td>
               <td className="px-4 py-3">{student.graduation_year}</td>
               <td className="px-4 py-3">{student.phase_key}</td>
               <td className="px-4 py-3">{student.lead_advisor}</td>
