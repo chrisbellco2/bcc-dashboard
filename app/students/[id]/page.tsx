@@ -81,7 +81,15 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
         </Link>
 
         <header className="rounded-2xl border border-stone-200 bg-[#faf7f2] p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold tracking-tight text-stone-900">{student.full_name}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight text-stone-900">{student.full_name}</h1>
+            <Link
+              href={`/students/${id}/add-note`}
+              className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-amber-50 transition-colors hover:bg-amber-800"
+            >
+              Add Note
+            </Link>
+          </div>
           <dl className="mt-4 grid grid-cols-1 gap-3 text-sm text-stone-700 md:grid-cols-2">
             <div>
               <dt className="text-xs uppercase tracking-wide text-stone-500">Graduation Year</dt>
