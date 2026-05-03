@@ -80,7 +80,7 @@ export default function ImportPage() {
               <input
                 id="csv-file"
                 type="file"
-                accept=".csv,text/csv,.zip,application/zip,application/x-zip-compressed"
+                accept=".csv,text/csv"
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
                 className="block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-700 file:mr-4 file:rounded-md file:border-0 file:bg-stone-200 file:px-3 file:py-2 file:text-sm file:font-medium file:text-stone-700 hover:file:bg-stone-300"
               />

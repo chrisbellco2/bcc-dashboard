@@ -154,6 +154,25 @@ export default async function Home() {
           </div>
         </header>
 
+        <section className="rounded-2xl border border-stone-200 bg-[#fcfaf6] p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-stone-900">Tools</h2>
+          <p className="mt-1 text-sm text-stone-600">Data import</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href="/import-students"
+              className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-800 shadow-sm transition-colors hover:border-amber-400 hover:bg-amber-50/80"
+            >
+              Import students (CPP)
+            </Link>
+            <Link
+              href="/import-notes"
+              className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-800 shadow-sm transition-colors hover:border-amber-400 hover:bg-amber-50/80"
+            >
+              Import Apple Notes
+            </Link>
+          </div>
+        </section>
+
         <section className="space-y-3 rounded-2xl border border-stone-200 bg-[#fcfaf6] p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-stone-900">New Students</h2>
