@@ -1,6 +1,7 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import Link from "next/link";
 import AllStudentsTable from "@/app/components/all-students-table";
+import LogoutButton from "@/app/components/logout-button";
 
 type StudentRow = {
   id: string;
@@ -141,11 +142,16 @@ export default async function Home() {
     <main className="min-h-screen bg-[#f5f1eb] px-6 py-10 text-stone-800 md:px-10">
       <div className="mx-auto max-w-7xl space-y-8">
         <header className="rounded-2xl border border-stone-200 bg-[#faf7f2] p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold tracking-tight text-stone-900">BCC Dashboard</h1>
-          <p className="mt-2 text-sm text-stone-600">
-            Weekly Review for college advising. Snapshot of new students, intervention flags, and
-            check-in cadence.
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-stone-900">BCC Dashboard</h1>
+              <p className="mt-2 text-sm text-stone-600">
+                Weekly Review for college advising. Snapshot of new students, intervention flags,
+                and check-in cadence.
+              </p>
+            </div>
+            <LogoutButton />
+          </div>
         </header>
 
         <section className="space-y-3 rounded-2xl border border-stone-200 bg-[#fcfaf6] p-5">
