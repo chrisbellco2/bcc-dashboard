@@ -1,5 +1,6 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import Link from "next/link";
+import AllStudentsTable from "@/app/components/all-students-table";
 
 type StudentRow = {
   id: string;
@@ -16,6 +17,7 @@ type StudentRow = {
   created_at: string;
   imported_on: string | null;
   last_cpp_activity: string | null;
+  current_status: string | null;
 };
 
 function dateDaysAgo(days: number): string {
@@ -83,77 +85,6 @@ function StudentTable({ students }: { students: StudentRow[] }) {
   );
 }
 
-function AllStudentsTable({
-  students,
-  recent21StudentIds,
-  noteCutoff21,
-  newStudentCutoff,
-}: {
-  students: StudentRow[];
-  recent21StudentIds: Set<string>;
-  noteCutoff21: string;
-  newStudentCutoff: string;
-}) {
-  if (students.length === 0) {
-    return (
-      <p className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
-        No active students found.
-      </p>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm">
-      <table className="min-w-full text-left text-sm text-stone-700">
-        <thead className="bg-stone-100 text-xs uppercase tracking-wide text-stone-600">
-          <tr>
-            <th className="px-4 py-3 font-medium">!</th>
-            <th className="px-4 py-3 font-medium">New</th>
-            <th className="px-4 py-3 font-medium">Ball</th>
-            <th className="px-4 py-3 font-medium">Full Name</th>
-            <th className="px-4 py-3 font-medium">Graduation Year</th>
-            <th className="px-4 py-3 font-medium">Phase</th>
-            <th className="px-4 py-3 font-medium">Ball Owner</th>
-            <th className="px-4 py-3 font-medium">Last CPP Activity</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-stone-100">
-          {students.map((student) => {
-            const noContactIn21Days =
-              !recent21StudentIds.has(student.id) &&
-              !hasRecentCppActivity(student.last_cpp_activity, noteCutoff21);
-            const needsAttentionIcon = student.needs_attention || noContactIn21Days ? "⚠️" : "";
-            const isNewStudent =
-              student.imported_on && hasRecentCppActivity(student.imported_on, newStudentCutoff);
-            const newIcon = isNewStudent ? "🟢" : "";
-            const ballIcon = student.ball_owner === "Chris" || student.ball_owner === "Gav" ? "🔵" : "⚪";
-
-            return (
-              <tr key={student.id} className="hover:bg-stone-50">
-                <td className="px-4 py-3 text-base">{needsAttentionIcon}</td>
-                <td className="px-4 py-3 text-base">{newIcon}</td>
-                <td className="px-4 py-3 text-base">{ballIcon}</td>
-                <td className="px-4 py-3 font-medium text-stone-900">
-                  <Link
-                    href={`/students/${student.id}`}
-                    className="transition-colors hover:text-amber-900 hover:underline"
-                  >
-                    {student.full_name}
-                  </Link>
-                </td>
-                <td className="px-4 py-3">{student.graduation_year}</td>
-                <td className="px-4 py-3">{student.phase_key}</td>
-                <td className="px-4 py-3">{student.ball_owner ?? "—"}</td>
-                <td className="px-4 py-3">{student.last_cpp_activity ?? "—"}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export default async function Home() {
   const newStudentCutoff = dateDaysAgo(7);
   const noteCutoff21 = dateDaysAgo(21);
@@ -162,14 +93,14 @@ export default async function Home() {
     supabaseServer
       .from("students")
       .select(
-        "id, first_name, full_name, last_name, graduation_year, phase_key, lead_advisor, student_key, ball_owner, status, needs_attention, created_at, imported_on, last_cpp_activity"
+        "id, first_name, full_name, last_name, graduation_year, phase_key, lead_advisor, student_key, ball_owner, status, needs_attention, created_at, imported_on, last_cpp_activity, current_status"
       )
       .gte("imported_on", newStudentCutoff)
       .order("imported_on", { ascending: false }),
     supabaseServer
       .from("students")
       .select(
-        "id, first_name, full_name, last_name, graduation_year, phase_key, lead_advisor, student_key, ball_owner, status, needs_attention, created_at, imported_on, last_cpp_activity"
+        "id, first_name, full_name, last_name, graduation_year, phase_key, lead_advisor, student_key, ball_owner, status, needs_attention, created_at, imported_on, last_cpp_activity, current_status"
       )
       .eq("status", "Active")
       .order("first_name", { ascending: true }),
@@ -266,7 +197,7 @@ export default async function Home() {
           </div>
           <AllStudentsTable
             students={activeStudents}
-            recent21StudentIds={recent21StudentIds}
+            recent21StudentIds={Array.from(recent21StudentIds)}
             noteCutoff21={noteCutoff21}
             newStudentCutoff={newStudentCutoff}
           />
