@@ -7,6 +7,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Typography from "@tiptap/extension-typography";
 import Underline from "@tiptap/extension-underline";
+import { Markdown } from "@tiptap/markdown";
 
 const NOTE_TYPES = ["Meeting", "Phone", "Email", "Text", "Zoom", "Internal"] as const;
 const AUTHORS = ["Chris", "Gav"] as const;
@@ -59,8 +60,10 @@ export default function AddNoteForm({ studentId }: AddNoteFormProps) {
       Underline,
       Highlight,
       Typography,
+      Markdown,
     ],
     content: "",
+    contentType: "markdown",
     editorProps: {
       attributes: {
         class:
@@ -76,13 +79,13 @@ export default function AddNoteForm({ studentId }: AddNoteFormProps) {
       return;
     }
 
-    const html = editor.getHTML().trim();
     const text = editor.getText().trim();
-
     if (!text) {
       setErrorMessage("Note content is required.");
       return;
     }
+
+    const markdown = editor.getMarkdown().trim();
 
     setIsSaving(true);
     setErrorMessage(null);
@@ -95,7 +98,7 @@ export default function AddNoteForm({ studentId }: AddNoteFormProps) {
         note_date: noteDate,
         note_type: noteType,
         author,
-        raw_content: html,
+        raw_content: markdown,
       }),
     });
 

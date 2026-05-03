@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import NoteMarkdown from "@/app/components/note-markdown";
 import { supabaseServer } from "@/lib/supabase/server";
 
 type StudentDetail = {
@@ -130,10 +131,9 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
                     <span>{note.note_type}</span>
                     <span>{note.author}</span>
                   </div>
-                  <div
-                    className="mt-3 text-sm leading-6 text-stone-700 [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-stone-900 [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-stone-900 [&_p]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_u]:underline [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:mb-1 [&_mark]:rounded [&_mark]:bg-amber-200 [&_mark]:px-1"
-                    dangerouslySetInnerHTML={{ __html: note.raw_content }}
-                  />
+                  <div className="mt-3">
+                    <NoteMarkdown content={note.raw_content} />
+                  </div>
                 </article>
               ))}
             </div>
