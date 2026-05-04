@@ -33,8 +33,8 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 | Notes entry interface (TipTap) | Working, tested with real data |
 | CPP student import (/import-students) | Working — 34 students imported |
 | Apple Notes zip import (/import-notes) | Working — 336 notes imported |
-| Authentication / login | NOT BUILT — Session 6 priority |
-| Vercel production deployment | NOT BUILT — Session 6 priority |
+| Authentication / login | BUILT |
+| Vercel production deployment | Live — bcc-dashboard-jet.vercel.app |
 | Inline ball_owner editing | NOT BUILT — Session 6 |
 | Inline current_status editing | NOT BUILT — Session 6 |
 | AI extraction pipeline | NOT BUILT — Phase 4 |
@@ -47,6 +47,7 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 - 34 active students — all 2027 grad year, all FIT phase
 - 336 notes imported from Apple Notes — full junior class
 - All students have last_cpp_activity populated from CPP export
+- Production Supabase has students but no notes yet (Vercel timeout on zip import — will batch import later)
 
 ---
 
