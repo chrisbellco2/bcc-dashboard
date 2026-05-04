@@ -37,6 +37,7 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 | Vercel production deployment | Live — bcc-dashboard-jet.vercel.app |
 | Inline ball_owner editing | NOT BUILT — Session 6 |
 | Inline current_status editing | NOT BUILT — Session 6 |
+| - Fix import-notes timeout on Vercel — refactor to streaming or chunked processing  | NOT BUILT — Session 6 |
 | AI extraction pipeline | NOT BUILT — Phase 4 |
 | Ingestion Layer (CPP scraper) | NOT BUILT — Phase 6+ |
 
