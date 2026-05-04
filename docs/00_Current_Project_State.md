@@ -40,6 +40,7 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 | - Fix import-notes timeout on Vercel — refactor to streaming or chunked processing  | NOT BUILT — Session 6 |
 | AI extraction pipeline | NOT BUILT — Phase 4 |
 | Ingestion Layer (CPP scraper) | NOT BUILT — Phase 6+ |
+| Apple Notes zip import (/import-notes) | Working locally — Vercel timeout issue, fix in Session 6 |
 
 ---
 
