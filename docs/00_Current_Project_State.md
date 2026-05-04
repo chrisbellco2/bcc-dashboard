@@ -12,8 +12,9 @@ Consulting, run by Chris Bell (IEC, Colorado Springs CO). It manages the full
 college advising lifecycle through Chris's YOU → FIT → APP model. Built to be 
 given away free to the IEC community under MIT license.
 
-It is a knowledge engine — not a CRM, not an LMS. BCC Dash is the destination 
-for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
+It is a knowledge engine — not a CRM, not an LMS. BCC Dash is the system of 
+record for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are 
+sources that feed it. Downstream tools and portals consume from it.
 
 ---
 
@@ -32,24 +33,22 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 | Student detail page | Notes history + markdown rendering |
 | Notes entry interface (TipTap) | Working, tested with real data |
 | CPP student import (/import-students) | Working — 34 students imported |
-| Apple Notes zip import (/import-notes) | Working — 336 notes imported |
-| Authentication / login | BUILT |
+| Apple Notes zip import (/import-notes) | Working locally — Vercel timeout issue, fix in Session 6 |
+| Authentication / login | Built |
 | Vercel production deployment | Live — bcc-dashboard-jet.vercel.app |
 | Inline ball_owner editing | NOT BUILT — Session 6 |
 | Inline current_status editing | NOT BUILT — Session 6 |
-| - Fix import-notes timeout on Vercel — refactor to streaming or chunked processing  | NOT BUILT — Session 6 |
 | AI extraction pipeline | NOT BUILT — Phase 4 |
 | Ingestion Layer (CPP scraper) | NOT BUILT — Phase 6+ |
-| Apple Notes zip import (/import-notes) | Working locally — Vercel timeout issue, fix in Session 6 |
 
 ---
 
 ## Current Data
 
 - 34 active students — all 2027 grad year, all FIT phase
-- 336 notes imported from Apple Notes — full junior class
+- 336 notes in local Supabase — full junior class Apple Notes import
 - All students have last_cpp_activity populated from CPP export
-- Production Supabase has students but no notes yet (Vercel timeout on zip import — will batch import later)
+- Production Supabase has students but no notes yet — Vercel timeout on zip import, fix in Session 6
 
 ---
 
@@ -71,13 +70,10 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 
 ## Session 6 Priorities
 
-- Authentication — login page, 5 advisor accounts (Chris, Gav, Mark, Laura, 
-  Esther), all routes protected
-- Deploy to Vercel — real production URL
+- Fix import-notes timeout on Vercel — refactor to streaming or chunked processing
 - Inline editing — ball_owner and current_status from dashboard
 - Student detail page editing — phase, mode, basic fields
-- Migration: add cpp_student_id (integer) and cpp_student_url (text) to 
-  students table
+- Migration: add cpp_student_id (integer) and cpp_student_url (text) to students table
 
 ---
 
@@ -89,7 +85,7 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 - **Provider independence** — every external service behind abstraction layer
 - **Migrations for everything** — no schema changes outside versioned SQL files
 - **No hardcoded curriculum** — BCC Core imported same as any IEC curriculum
-- **BCC Dash is destination, tools are sources** — CPP, Apple Notes etc. feed in
+- **BCC Dash is system of record** — sources feed in, downstream tools consume from it
 - **Markdown as note format** — TipTap outputs markdown, stored and rendered as md
 - **CPP is college list master** — BCC Dash reads, never overwrites
 - **cpp_student_id + cpp_student_url** — permanent bridge to CPP, enables scraper
@@ -128,7 +124,7 @@ for all student data. External tools (CPP, Apple Notes, Zoom, etc.) are sources.
 | Auth + API | Supabase |
 | AI | Anthropic Claude API (abstracted, not yet active) |
 | Version Control | Git + GitHub |
-| Deployment | Vercel (not yet deployed) |
+| Deployment | Vercel — bcc-dashboard-jet.vercel.app |
 | IDE | Cursor |
 | Local Dev | Docker + Supabase CLI |
 | Ingestion scraper (planned) | Python + Playwright — local on advisor Mac |
