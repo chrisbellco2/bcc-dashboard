@@ -1,315 +1,96 @@
-**BCC Dashboard --- Release Notes**
+# BCC Dashboard — Release Notes
 
-Living Document --- Started May 1, 2026
+Living Document — Started May 1, 2026
 
-*Running changelog of all builds and changes*
+_Running changelog of all builds and changes_
 
-  -----------------------------------------------------------------------
-  *This document is updated after every significant build session. It
-  records what was built, what decisions were made, and what assumptions
-  were carried forward. It is both a technical changelog and a decision
-  log.*
-  -----------------------------------------------------------------------
+_This document is updated after every significant build session. It records what was built, what decisions were made, and what assumptions were carried forward. It is both a technical changelog and a decision log._
 
-  -----------------------------------------------------------------------
+---
 
 # How to Read This Document
 
-Entries are in reverse chronological order --- newest first. Each entry
-includes:
-
+Entries are in reverse chronological order — newest first. Each entry includes:
 - Date and session description
-
 - What was built or changed
-
 - Decisions made (and why)
-
 - Assumptions made (flagged for later review)
-
 - What is next
 
-**Session 1 --- May 1, 2026**
+---
 
-*Foundation Build --- Environment Setup, Students Spine, Document Set*
+## Pre-Session 6 Design — May 5, 2026
 
-## What Was Built
+_Action Model Design — Replacing ball_owner with two-sided action fields_
 
-- Complete development environment from scratch (macOS 26, CLT,
-  Homebrew, Git, Node, Supabase CLI, Docker Desktop, Cursor)
+> No code written. Pure design work. A significant architectural improvement emerged from a conversation about naming the "ball" concept for a generic IEC tool.
 
-- GitHub repository initialized: github.com/chrisbellco2/bcc-dashboard
-  (public, MIT license)
+### What Was Designed
 
-- Next.js 15 + TypeScript + Tailwind initialized and running at
-  localhost:3000
+The `ball_owner` field was replaced entirely with a two-sided action model. This change emerged from trying to find a universal, professional term for "who has the ball" — and realizing the underlying concept was architecturally incomplete.
 
-- Supabase project created (bcc-dashboard, Project ID:
-  dlxbdepjbvngkgxlhcdk)
+**The core insight:** The weekly review is really answering two independent questions:
+1. Do I (the advisor) have something to do for this student?
+2. Does the student have something to do?
 
-- Supabase client abstraction layer created (lib/supabase/client.ts)
+These are not mutually exclusive. Both can be true simultaneously. A single "owner" field forces a false binary that doesn't reflect reality.
 
-- Students spine migration written and pushed to production (migration:
-  20260501203957_create_students_table.sql)
+**The new model:**
+- `advisor_action` (text, nullable) — what the advisor needs to do next. Null = no action.
+- `student_action` (text, nullable) — what the student needs to do next. Null = no action.
+- Null is the boolean. No separate boolean ownership flag needed.
+- Dashboard section placement is derived entirely from these two fields.
 
-- Full BCC document set written: Documents 01-11 (this document)
+**Dashboard sections (new):**
+- **Both Active** — both fields have a value
+- **Needs Attention** — both null + 21 days no contact or manually flagged
+- **Advisor Has Action** — advisor_action set, student_action null
+- **Student Has Action** — student_action set, advisor_action null
+- **All Students** — complete list
 
-## Architecture Decisions Made
+Each row shows two pills: advisor action (blue) and student action (amber). Muted when empty. No student appears in more than one section.
 
-  -----------------------------------------------------------------------
-  **Decision**           **Rationale**
-  ---------------------- ------------------------------------------------
-  Move from Airtable to  Airtable limitations (rate limits, fake joins,
-  Postgres/Supabase      no real migrations) were blocking progress.
-                         Junior mailing MVP failed. Postgres is the
-                         correct foundation for BCC\'s relational
-                         architecture.
+**What was also decided:**
+- `assigned_tasks` tall table moved up to Session 6 — build the correct foundation now rather than shortcut and migrate later
+- Action fields on students are lightweight surface fields; assigned_tasks is the proper data home for full task history
+- In a future phase, AI extraction will suggest values for both action fields from meeting note content
+- The `ball_owner` field will be dropped in a Session 6 migration
 
-  Stack: Next.js +       Modern, well-supported, excellent AI coding
-  TypeScript +           assistance, provider-independent, freely
-  Tailwind + Supabase +  deployable.
-  Vercel                 
+### Architecture Decisions Made
 
-  MVP target: Weekly     Original MVP (junior mailing) was time-sensitive
-  Student Review         and had already failed. Weekly review delivers
-                         ongoing operational value and is a natural first
-                         feature.
+| Decision | Rationale |
+|---|---|
+| Replace ball_owner with advisor_action + student_action | Single ownership field is a false binary. Both sides can have active work simultaneously. Two fields reflects reality. |
+| Null as boolean | Text present = action exists. Null = no action. A separate boolean would be redundant and require two fields to stay in sync. |
+| No ownership field | Ownership was redundant once both action pills are visible. Section placement is derived from field values alone. |
+| Build assigned_tasks now | The correct data home for tasks exists in the design. Building a shortcut now would require migration later. Discipline over expedience. |
+| Terminology: advisor_action / student_action | Professional, universal, portable to any IEC practice. No sports metaphors, no jargon. |
 
-  Dual-key identity      UUID for system integrity and AI calls.
-  pattern (id +          Human-readable key for daily use. Enforces
-  student_key)           privacy-by-design structurally.
+### Naming Exploration Summary
 
-  Provider independence  Every external service sits behind an
-  as founding rule       abstraction layer. One file to swap any
-                         provider.
+The following terms were explored and rejected before arriving at the final model:
 
-  CPP is the college     Students access college lists via CPP. BCC
-  list master            Dashboard reads from CPP, never writes back.
+| Term | Reason Rejected |
+|---|---|
+| ball | Too colloquial, not universally understood |
+| court | Still a sports metaphor |
+| waiting_on | "Waiting" is passive; implies stuck rather than in-motion |
+| next_move | Points to an action, not a person — answer would be a task, not a name |
+| ownership | Redundant once two-pill model is in place |
+| with | Elegant but too implicit for a generic tool used by strangers |
+| onus | Too obscure for a generic tool |
 
-  Document set: 12       Six months of Airtable-era docs (Master
-  documents replacing 25 Architecture v3.12, Appendices A-S) replaced
-                         with 12 clean documents mapped to the new stack.
+The realization that led to the final design: the question isn't "who owns this?" — it's two separate questions that need two separate fields.
 
-  Gav Bell removed from  Gav took a new job. System is now primarily
-  system documentation   Chris\'s, with Mark being the Success Manager
-                         and more. The open-source IEC community as
-                         secondary audience.
-  -----------------------------------------------------------------------
+### What Is Next (Session 6)
 
-## Assumptions Made
-
-  ---------------------------------------------------------------------------
-  **Assumption**            **Impact if Wrong**   **When to Verify**
-  ------------------------- --------------------- ---------------------------
-  student_key format:       Collision possible if When migration 002 is
-  GradYear_FirstLast_XXXX   two students share    written
-  (first 4 of UUID)         name and year         
-                            (unlikely). Format    
-                            may need adjustment.  
-
-  14-day Ball Check         Too short or too long After first real use of
-  threshold is appropriate  for Chris\'s actual   weekly review
-                            rhythm                
-
-  CPP export format is      Import pipeline may   When import pipeline is
-  parseable                 need different        built
-                            approach              
-
-  Anthropic API is the      May need different    After initial extraction
-  right AI provider for all providers for         testing
-  use cases                 different tasks       
-
-  Gmail API is sufficient   May need dedicated    When communication drafting
-  for email sending         email service for     is built
-                            deliverability        
-
-  supabase/migrations/ is   CLI may use different When supabase start is set
-  the correct local path    directory depending   up locally
-                            on version            
-  ---------------------------------------------------------------------------
-
-## What Is Next
-
-- Session 2: Set up local Supabase (Docker), run migration 002
-  (student_key), write RLS policies, add test students
-
-- Session 2: Write Notes table migration
-
-- Session 2: Build weekly review queries
-
-- Session 2: Start advisor dashboard UI
-
-- Soon: Test CPP AI feature for structured export capability
-
-- Soon: Explore Apple Notes markdown export for note ingestion
-
-## Environment Snapshot
-
-  -----------------------------------------------------------------------
-  **Component**         **Version / State**
-  --------------------- -------------------------------------------------
-  macOS                 26.4.1
-
-  Node.js               v25.9.0
-
-  Supabase CLI          2.95.4
-
-  Docker Desktop        4.71.0
-
-  Next.js               16.2.4
-
-  Git                   2.54.0
-
-  GitHub repo           2 commits (initial + Next.js init + Students
-                        migration)
-
-  Supabase project      bcc-dashboard --- Healthy --- Production ---
-                        dlxbdepjbvngkgxlhcdk
-
-  Local Supabase        Not yet initialized (supabase start not yet run)
-
-  Production URL        Not yet deployed to Vercel
-  -----------------------------------------------------------------------
-
-\-\-- Future sessions appended below this line \-\--
-
-**Session 2 --- May 2, 2026**
-
-*Weekly Review Dashboard, Notes Table, Local Environment*
-
-**What Was Built**
-
-- Local Supabase initialized via Docker --- full offline development
-  capability
-
-- Migration 002: student_key field added to students table
-
-- Migration 003: RLS policies added to students table
-
-- Migration 004: student_key auto-generation trigger
-
-- Migration 005: notes table created (first tall table)
-
-- Migration 006: needs_attention field added to students table
-
-- 4 anonymized test students added with correct student_keys
-
-- All three weekly review queries written and tested
-
-- Weekly Review dashboard UI built (Next.js + Tailwind)
-
-- Student detail page built with notes history
-
-- All migrations pushed to production Supabase
-
-- All code committed to GitHub
-
-**Architecture Decisions Made**
-
-  -----------------------------------------------------------------------
-  **Decision**           **Rationale**
-  ---------------------- ------------------------------------------------
-  note_extracts renamed  Named for what the data is, not how it arrived.
-  to student_attributes  Holds all structured knowledge about a student
-                         from any source.
-
-  last_cpp_activity      CPP \"last note\" means any activity ---
-  field planned for      meeting, email, advisor note. Naming reflects
-  students               this accurately.
-
-  Curriculum importing   BCC\'s own curriculum is imported via the same
-  as founding            mechanism as any other IEC. No hardcoded
-  architecture           curriculum ever.
-
-  Curriculum sharing     Curriculum packages are versioned, structured
-  vision established     exports of curriculum tables. Community library
-                         of advising frameworks is the long-term goal.
-  -----------------------------------------------------------------------
-
-**What Is Next (Session 3)**
-
-- Doc update pass --- ball_owner, current_status, last_cpp_activity
-  field definitions
-
-- Deploy to Vercel
-
-- Migrations: ball_owner, current_status, last_cpp_activity on students
-  table
-
-- Dashboard enhancements --- add new columns to weekly review
-
-- Notes entry interface
-
-- Basic CSV import from CPP export
-
-**RELEASE NOTES --- Session 4 entry (append after Session 1)**
-
-**Session 4 --- May 3, 2026** *Apple Notes Import, Markdown Rendering,
-Advisor Expansion*
-
-**What Was Built**
-
-- Apple Notes zip import pipeline --- fully working with deduplication,
-  macOS .\_ metadata filtering, and 150MB file support
-
-- Fixed FormData parsing, 10MB body size limit, and wrong URL bug
-  (/import vs /import-notes)
-
-- Renamed /import → /import-students for naming consistency
-
-- Added Tools section to main dashboard with links to both importers
-
-- Switched TipTap editor to output markdown instead of HTML
-
-- Added react-markdown rendering for notes on student detail pages
-
-- Expanded lead_advisor valid values: Chris, Gav, Mark, Laura, Esther
-  (migration applied locally and to production)
-
-**Decisions Made**
-
-- Standardize on markdown as the single note format going forward
-
-- Import pages follow /import-\[type\] naming convention
-
-- macOS .\_ and \_\_MACOSX zip entries silently ignored --- not counted
-  as errors
-
-- proxyClientMaxBodySize set to 150MB in next.config.ts to support large
-  zip uploads
-
-**Assumptions**
-
-- Supabase free tier rate limit on auth emails will be resolved by
-  upgrading or configuring custom SMTP
-
-**What Is Next**
-
-- Ball ownership and \"next ask\" workflow per student
-
-- Student detail page editing
-
-- Advisor account invites (pending Supabase rate limit)
-
-- AI extraction pipeline (Phase 4)
-
-**Environment Snapshot**
-
-  ----------------------------------------------
-  **Component**   **Version / State**
-  --------------- ------------------------------
-  GitHub repo     Multiple commits, main branch
-                  current
-
-  Supabase        bcc-dashboard --- Healthy ---
-  project         Production
-
-  Local Supabase  Running via Docker
-
-  Production URL  Not yet deployed to Vercel
-
-  Notes in        336 (all junior class, fully
-  database        imported)
-  ----------------------------------------------
+- Migration: drop `ball_owner`, add `advisor_action` and `student_action` to students table
+- Migration: create `assigned_tasks` table
+- Migration: add `cpp_student_id` and `cpp_student_url` to students table
+- Rebuild dashboard sections to reflect new four-section model
+- Inline editing of action fields from dashboard
+- Fix Apple Notes zip import Vercel timeout
+- Student detail page field editing
 
 ---
 
@@ -317,15 +98,12 @@ Advisor Expansion*
 
 _Ingestion Layer Exploration — CPP Tour, Architecture Design_
 
-> No code written this session. Pure architecture exploration. The 4:15am 
-> wake-up that produced the Ingestion Layer vision.
+> No code written this session. Pure architecture exploration. The 4:15am wake-up that produced the Ingestion Layer vision.
 
 ### What Was Explored and Decided
 
-- Full tour of College Planner Pro (CPP) — students list, student detail page, 
-  meetings, notes, college list, removed colleges popup, all report exports
-- Ingestion Layer mental model established: BCC Dash is destination, all tools 
-  are sources
+- Full tour of College Planner Pro (CPP) — students list, student detail page, meetings, notes, college list, removed colleges popup, all report exports
+- Ingestion Layer mental model established: BCC Dash is destination, all tools are sources
 - CPP data inventory completed — exportable vs scraping required
 - Three-tier ingestion architecture designed
 - Python + Playwright selected as scraper stack
@@ -333,7 +111,6 @@ _Ingestion Layer Exploration — CPP Tour, Architecture Design_
 - Adapter pattern established for CounselMore, Maia, and future sources
 - Sankey diagram goal confirmed — college list history data supports it
 - Document 12 (Ingestion Layer Reference) created as placeholder
-- Document 00 updated
 
 ### Architecture Decisions Made
 
@@ -348,7 +125,6 @@ _Ingestion Layer Exploration — CPP Tour, Architecture Design_
 | Store both cpp_student_id AND cpp_student_url | ID (e.g. 1468) is stable truth. Full URL is navigation convenience. Both stored. |
 | Adapter pattern for extensibility | adapters/cpp.py is the template. CounselMore, Maia etc. output same normalized shape. BCC Dash unchanged. |
 | College list is highest-value scrape target | Structured, changes over time, not available via export. Supports Sankey diagram goal. |
-| CPP notes low priority for Chris | Chris uses Apple Notes. CPP notes matter for other IECs — build later for give-away. |
 | No scheduled scraping — advisor-triggered only | Advisor Calm applied to ingestion. Scheduled scrapers fail silently. Triggered scrapers fail loudly. |
 
 ### CPP Data Inventory
@@ -362,23 +138,6 @@ _Ingestion Layer Exploration — CPP Tour, Architecture Design_
 | CPP removed colleges popup | College, who removed, timestamp | application_records | Playwright scraper |
 | CPP notes | Advisor-to-student sent emails | communications | Playwright scraper (later) |
 
-### Schema Changes Identified (Not Yet Built)
-
-- `cpp_student_id` (integer, nullable) — CPP student ID from URL, e.g. 1468
-- `cpp_student_url` (text, nullable) — full URL e.g. bellcollege.collegeplannerpro.com/students/view/1/1468
-- Both added in Session 6 migration
-
-### Ingestion Layer Build Order
-
-| Phase | What | Tech | Effort |
-|---|---|---|---|
-| Session 6 (now) | Add cpp_student_id + cpp_student_url fields | SQL migration | 10 minutes |
-| Ingestion v1 | CSV import UI for exam/test scores | Next.js | 1 session |
-| Ingestion v2 | Python + Playwright scraper for college list | Python | 2-3 sessions |
-| Ingestion v3 | One Button sync UI in dashboard | Next.js + Python | 1 session |
-| Ingestion v4 | Bulk sync — all students at once | Python extension | 1 session |
-| Later | CPP notes scraping for give-away IECs | Python extension | 1 session |
-
 ### Assumptions Made
 
 | Assumption | Impact if Wrong | When to Verify |
@@ -388,17 +147,103 @@ _Ingestion Layer Exploration — CPP Tour, Architecture Design_
 | College list renders consistently across all students | Scraper may need per-student adjustments | When building scraper |
 | Sankey data fully captured by three college list states | May need additional data points | When building Sankey |
 
-### What Is Next (Session 6)
+---
 
-- Authentication — login page, 5 advisor accounts, all routes protected
-- Deploy to Vercel — real production URL
-- Inline editing — ball_owner and current_status from dashboard
-- Student detail page editing — phase, mode, basic fields
-- Migration: cpp_student_id and cpp_student_url on students table
+## Session 4 — May 3, 2026
 
-*BCC Dashboard --- Bell College Consulting*
+_Apple Notes Import, Markdown Rendering, Advisor Expansion_
 
-*Built with Claude (Sonnet 4.6) --- Cursor --- Next.js --- Supabase ---
-Postgres*
+### What Was Built
 
-*MIT License --- Built to be given away*
+- Apple Notes zip import pipeline — fully working with deduplication, macOS ._ metadata filtering, and 150MB file support
+- Fixed FormData parsing, 10MB body size limit, and wrong URL bug (/import vs /import-notes)
+- Renamed /import → /import-students for naming consistency
+- Added Tools section to main dashboard with links to both importers
+- Switched TipTap editor to output markdown instead of HTML
+- Added react-markdown rendering for notes on student detail pages
+- Expanded lead_advisor valid values: Chris, Gav, Mark, Laura, Esther (migration applied locally and to production)
+
+### Decisions Made
+
+- Standardize on markdown as the single note format going forward
+- Import pages follow /import-[type] naming convention
+- macOS ._ and __MACOSX zip entries silently ignored — not counted as errors
+- proxyClientMaxBodySize set to 150MB in next.config.ts to support large zip uploads
+
+### Assumptions
+
+- Supabase free tier rate limit on auth emails will be resolved by upgrading or configuring custom SMTP
+
+---
+
+## Session 2 — May 2, 2026
+
+_Weekly Review Dashboard, Notes Table, Local Environment_
+
+### What Was Built
+
+- Local Supabase initialized via Docker — full offline development capability
+- Migration 002: student_key field added to students table
+- Migration 003: RLS policies added to students table
+- Migration 004: student_key auto-generation trigger
+- Migration 005: notes table created (first tall table)
+- Migration 006: needs_attention field added to students table
+- 4 anonymized test students added with correct student_keys
+- All three weekly review queries written and tested
+- Weekly Review dashboard UI built (Next.js + Tailwind)
+- Student detail page built with notes history
+- All migrations pushed to production Supabase
+- All code committed to GitHub
+
+### Architecture Decisions Made
+
+| Decision | Rationale |
+|---|---|
+| student_attributes renamed from note_extracts | Named for what the data is, not how it arrived. Holds all structured knowledge about a student from any source. |
+| last_cpp_activity field planned for students | CPP "last note" means any activity — meeting, email, advisor note. Naming reflects this accurately. |
+| Curriculum importing as founding architecture | BCC's own curriculum is imported via the same mechanism as any other IEC. No hardcoded curriculum ever. |
+
+---
+
+## Session 1 — May 1, 2026
+
+_Foundation Build — Environment Setup, Students Spine, Document Set_
+
+### What Was Built
+
+- Complete development environment from scratch (macOS 26, CLT, Homebrew, Git, Node, Supabase CLI, Docker Desktop, Cursor)
+- GitHub repository initialized: github.com/chrisbellco2/bcc-dashboard (public, MIT license)
+- Next.js 15 + TypeScript + Tailwind initialized and running at localhost:3000
+- Supabase project created (bcc-dashboard, Project ID: dlxbdepjbvngkgxlhcdk)
+- Supabase client abstraction layer created (lib/supabase/client.ts)
+- Students spine migration written and pushed to production
+- Full BCC document set written: Documents 01-11
+
+### Architecture Decisions Made
+
+| Decision | Rationale |
+|---|---|
+| Move from Airtable to Postgres/Supabase | Airtable limitations (rate limits, fake joins, no real migrations) were blocking progress. Junior mailing MVP failed. Postgres is the correct foundation for BCC's relational architecture. |
+| Stack: Next.js + TypeScript + Tailwind + Supabase + Vercel | Modern, well-supported, excellent AI coding assistance, provider-independent, freely deployable. |
+| MVP target: Weekly Student Review | Original MVP (junior mailing) was time-sensitive and had already failed. Weekly review delivers ongoing operational value and is a natural first feature. |
+| Dual-key identity pattern (id + student_key) | UUID for system integrity and AI calls. Human-readable key for daily use. Enforces privacy-by-design structurally. |
+| Provider independence as founding rule | Every external service sits behind an abstraction layer. One file to swap any provider. |
+| CPP is the college list master | Students access college lists via CPP. BCC Dashboard reads from CPP, never writes back. |
+| Document set: 12 documents replacing 25 | Six months of Airtable-era docs (Master Architecture v3.12, Appendices A-S) replaced with 12 clean documents mapped to the new stack. |
+
+### Environment Snapshot
+
+| Component | Version / State |
+|---|---|
+| macOS | 26.4.1 |
+| Node.js | v25.9.0 |
+| Supabase CLI | 2.95.4 |
+| Docker Desktop | 4.71.0 |
+| Next.js | 16.2.4 |
+| Git | 2.54.0 |
+
+---
+
+_BCC Dashboard — Bell College Consulting_
+_Built with Claude (Sonnet 4.6) — Cursor — Next.js — Supabase — Postgres_
+_MIT License — Built to be given away_
